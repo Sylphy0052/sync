@@ -9,6 +9,4 @@ public class QueueComparator implements Comparator<MyMessage> {
     public int compare(MyMessage m1, MyMessage m2) {
         return m1.tick < m2.tick ? -1 : 1;
     }
-
-
 }

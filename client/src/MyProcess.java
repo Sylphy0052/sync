@@ -13,49 +13,109 @@ public class MyProcess extends Thread {
     private int tick;
     private Integer id;
     private Random rmd;
+    private Share share1, share2;
+    private String space = "";
 
     private static int REQ = 1;
     private static int ACK = 2;
-    private static int NUM = 2;
+    private static int CLIENT_NUM = 2;
 
 
-    public MyProcess(int id) {
+    public MyProcess(Share share1, Share share2, int id) {
         queue = new ArrayList<>();
         this.id = id;
         this.rmd = new Random();
-        this.tick = rmd.nextInt(10);
+        // 同じにならないように
+        this.tick = rmd.nextInt(5) * 2 + 1;
+        if(id == 1) {
+            this.share1 = share1;
+            this.share2 = share2;
+        } else if(id == 2) {
+            this.share1 = share2;
+            this.share2 = share1;
+            space = "                    ";
+        }
+        start();
     }
 
-    // send ack
-    private void multi_send() {
-        tick++;
+    private void print(String str) {
+        System.out.println(space + str);
+    }
 
+    private void send_ack(MyMessage msg) {
+        print("Send ACK");
+        tick++;
+        int to_id = msg.from_id;
+        MyMessage ack_msg = new MyMessage(ACK, id, to_id, tick);
+        share1.send_process(ack_msg);
+        queue.add(ack_msg);
+    }
+
+    private void send_req() {
+        print("Send REQ");
+        tick++;
+        MyMessage req_msg = new MyMessage(REQ, id, 0, tick);
+        queue.add(req_msg);
+        share1.send_process(req_msg);
+        recv();
+        send_ack(req_msg);
     }
 
     private void recv() {
+        print("RECV");
         tick++;
-        // analyze
-
-        MyMessage msg = new MyMessage();
+        // recv
+        MyMessage msg = share2.read_process();
         queue.add(msg);
-
-        // if id != my_id -> multi_send
-
+        // if req -> send
+        if(msg.type == REQ) {
+            send_ack(msg);
+            recv();
+        }
         // else -> Do nothing
-
     }
 
     private void exec() {
         tick++;
-        // 6 message in queue
+        array_sort();
+        // queue check
+        try {
+            sleep(id * 1000);
+        } catch(Exception e) {
 
+        }
+        show_queue();
+        int count1 = 0;
+        int count2 = 0;
+        for(MyMessage msg : queue) {
+            if(msg.from_id == 1) {
+                count1++;
+            } else if(msg.from_id == 2) {
+                count2++;
+            }
+            if(count1 == CLIENT_NUM + 1) {
+                print("execute Task -> 1");
+                count1 = 0;
+            }
+            if(count2 == CLIENT_NUM + 1) {
+                print("execute Task -> 2");
+                count2 = 0;
+            }
+        }
+    }
+
+    private void show_queue() {
+        for(MyMessage msg : queue) {
+            print(msg.show());
+        }
     }
 
     // first time execute
     private void send_request() {
         tick++;
-        System.out.println(String.format("tick : %d", tick));
-        queue.add(new MyMessage(REQ, id, tick));
+        print(String.format("tick : %d", tick));
+        send_req();
+        recv();
     }
 
     // sort MyMessage by tick
@@ -66,12 +126,8 @@ public class MyProcess extends Thread {
 
     @Override
     public void run() {
-        System.out.println(String.format("---%d---", id));
+        print(String.format("---%d---", id));
         send_request();
-        for(int i = 0; i < NUM * NUM + NUM - 1; i++) {
-            recv();
-        }
         exec();
     }
-
 }

@@ -3,9 +3,9 @@
  */
 public class Main {
     public static void main(String[] args) {
-        MyProcess p1 = new MyProcess(1);
-        MyProcess p2 = new MyProcess(2);
-        p1.run();
-        p2.run();
+        Share share1 = new Share();
+        Share share2 = new Share();
+        MyProcess p1 = new MyProcess(share1, share2, 1);
+        MyProcess p2 = new MyProcess(share1, share2, 2);
     }
 }
