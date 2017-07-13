@@ -43,17 +43,16 @@ public class MyProcess extends Thread {
     }
 
     private void send_ack(MyMessage msg) {
-        print("Send ACK");
-        tick++;
-        int to_id = msg.from_id;
-        MyMessage ack_msg = new MyMessage(ACK, id, to_id, tick);
+//        print("Send ACK");
+        tick += id;
+        MyMessage ack_msg = new MyMessage(ACK, id, msg.from_id, tick);
         share1.send_process(ack_msg);
         queue.add(ack_msg);
     }
 
     private void send_req() {
-        print("Send REQ");
-        tick++;
+//        print("Send REQ");
+        tick += id;
         MyMessage req_msg = new MyMessage(REQ, id, 0, tick);
         queue.add(req_msg);
         share1.send_process(req_msg);
@@ -62,8 +61,8 @@ public class MyProcess extends Thread {
     }
 
     private void recv() {
-        print("RECV");
-        tick++;
+//        print("RECV");
+        tick += id;
         // recv
         MyMessage msg = share2.read_process();
         queue.add(msg);
@@ -76,15 +75,11 @@ public class MyProcess extends Thread {
     }
 
     private void exec() {
-        tick++;
+        tick += id;
         array_sort();
         // queue check
-        try {
-            sleep(id * 1000);
-        } catch(Exception e) {
-
-        }
-        show_queue();
+        StringBuilder result = new StringBuilder();
+        result.append(show_queue());
         int count1 = 0;
         int count2 = 0;
         for(MyMessage msg : queue) {
@@ -94,26 +89,33 @@ public class MyProcess extends Thread {
                 count2++;
             }
             if(count1 == CLIENT_NUM + 1) {
-                print("execute Task -> 1");
+                result.append(space);
+                result.append("execute Task -> 1\n");
                 count1 = 0;
             }
             if(count2 == CLIENT_NUM + 1) {
-                print("execute Task -> 2");
+                result.append(space);
+                result.append("execute Task -> 2\n");
                 count2 = 0;
             }
         }
+        System.out.println(result.toString());
     }
 
-    private void show_queue() {
+    private String show_queue() {
+        StringBuilder sb = new StringBuilder();
         for(MyMessage msg : queue) {
-            print(msg.show());
+            sb.append(space);
+            sb.append(msg.show());
+            sb.append("\n");
         }
+        return sb.toString();
     }
 
     // first time execute
     private void send_request() {
-        tick++;
-        print(String.format("tick : %d", tick));
+        tick += id;
+//        print(String.format("tick : %d", tick));
         send_req();
         recv();
     }
@@ -126,7 +128,7 @@ public class MyProcess extends Thread {
 
     @Override
     public void run() {
-        print(String.format("---%d---", id));
+//        print(String.format("---%d---", id));
         send_request();
         exec();
     }
